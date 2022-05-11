@@ -1,0 +1,260 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Provision pipeline to deploy static websites to s3.
+
+Parameters:
+  WebsiteS3Bucket:
+    Type: String
+    Default: ''
+
+Resources:    
+          
+# Bucket to store pipeline artifacts
+  PipelineArtifactsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+
+# website code 
+  CodeRepository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Sub ${AWS::StackName}-website
+      RepositoryDescription: source code for website 
+    DeletionPolicy: Delete
+
+# iam role for pipeline 
+  PipelineIAMRole: 
+    Type: AWS::IAM::Role
+    Properties: 
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: 
+                - codepipeline.amazonaws.com
+      Policies: 
+        - PolicyName: PipelineIAMRole
+          PolicyDocument: 
+            Version: 2012-10-17
+            Statement: 
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:PutObject
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${PipelineArtifactsBucket}/*'
+                  - !Sub 'arn:aws:s3:::${WebsiteS3Bucket}/*'              
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - codecommit:CancelUploadArchive
+                  - codecommit:GetBranch
+                  - codecommit:GetCommit
+                  - codecommit:GetUploadArchiveStatus
+                  - codecommit:UploadArchive
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource: !Sub 'arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:*'    
+# code pipeline 
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Description: pipeline to deploy waf rules
+    Properties:
+      ArtifactStore:
+        Location: !Ref PipelineArtifactsBucket
+        Type: S3
+      RoleArn: !GetAtt PipelineIAMRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceCode
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: 1
+              Configuration:
+                RepositoryName: !GetAtt CodeRepository.Name
+                BranchName: master
+                PollForSourceChanges: False
+              OutputArtifacts:
+                - Name: SourceCode
+              RunOrder: 1
+        - Name: DeployWebsite
+          Actions:
+            - Name: DeployWebsite
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                BucketName: !Ref WebsiteS3Bucket
+                Extract: True
+              InputArtifacts:
+                - Name: SourceCode
+              RunOrder: '1'
+
+  TriggerWebsitePipeline:
+    Type: "AWS::Events::Rule"
+    Description: ''
+    Properties: 
+      EventPattern: 
+        source:
+          - aws.codecommit
+        detail-type:
+          - "CodeCommit Repository State Change" 
+        resources: 
+          - !GetAtt CodeRepository.Arn 
+        detail:
+          event:
+            - "referenceCreated"
+            - "referenceUpdated"
+          referenceType:
+            - "branch"
+          referenceName:
+            - master
+      State: ENABLED
+      Targets:
+        - 
+          Arn: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}' 
+          Id: '1'
+          RoleArn: !GetAtt 'TriggerWebsitePipelineIAMRole.Arn'
+
+# iam role for cloudwatch rule to trigger code pipeline
+  TriggerWebsitePipelineIAMRole: 
+    Type: "AWS::IAM::Role"
+    Description: IAM role for cloudwatch event to be able to start pipeline execution
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "events.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies: 
+        - 
+          PolicyName: "StartPipeline"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement:    
+              - 
+                Effect: "Allow"
+                Action: 
+                  - codepipeline:StartPipelineExecution
+                Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}'  
+
+
+  BucketCleanPipelineArtifactsBucket:
+    Type: Custom::BucketCleanupLambda
+    Properties:
+      ServiceToken: !GetAtt BucketCleanupLambda.Arn
+      BucketName: !Ref PipelineArtifactsBucket
+
+  BucketCleanupLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      MemorySize: 256
+      Timeout: 30
+      Role: !GetAtt BucketCleanupLambdaIAMRole.Arn
+      Handler: index.lambda_handler
+      Code: 
+        ZipFile: |
+          import boto3
+          import sys
+          import urllib3
+          import json
+
+          s3_client = boto3.client('s3')
+          http = urllib3.PoolManager()
+
+          def lambda_handler(event, context):
+            print('Incoming Event: {0}'.format(event) )
+            response_data = {}
+            response_data['PhysicalResourceId'] = 'hardcodedphyscialid'
+            response_data['Status'] = 'SUCCESS'
+            response_data['StackId'] = event['StackId']
+            response_data['RequestId'] = event['RequestId']    
+            response_data['LogicalResourceId'] = event['LogicalResourceId']
+            cfn_response_url = event['ResponseURL']
+
+            if event['RequestType'] == 'Delete':
+              try:
+                bucket_name = event['ResourceProperties']['BucketName']
+                # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_objects_v2                
+                objects_list = s3_client.list_objects_v2(
+                    Bucket = bucket_name
+                  )
+                print(objects_list)
+                if 'Contents' in objects_list: 
+                  for object in objects_list['Contents']:
+                    delete_object_response = s3_client.delete_object(
+                      Bucket = bucket_name,
+                      Key = object['Key']
+                    )
+                    print('delete_object_response: {0}'.format(delete_object_response))
+                else:
+                  print('Nothing to delete .. ')
+                  
+                response_data['Status'] = 'SUCCESS'
+                                
+              except:
+                print("Unexpected error: ", sys.exc_info())
+                response_data['Status'] = 'FAILED'
+                response_data['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+            
+            else:
+              print('RequestType: {0}'.format(event['RequestType']))
+
+            http.request('PUT', cfn_response_url, body=json.dumps(response_data).encode('utf-8'), headers={'Content-Type': 'application/json'})
+            return event  
+  
+  BucketCleanupLambdaIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: "S3_DeleteFile"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:List*
+                  - s3:DeleteObject
+                Resource: '*'
+
+Outputs:
+  CodeCloneHttpUrl:
+    Value: !GetAtt CodeRepository.CloneUrlHttp
+    Description: ''
+
+  CodeClonesSshUrl:
+    Value: !GetAtt CodeRepository.CloneUrlSsh
+    Description: ''
+
+

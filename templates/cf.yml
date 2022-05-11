@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+  Automate static website deployments to S3 using CodePipeline
+Resources:
+  Cloud9InstanceS3CodePipeline:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties: 
+      AutomaticStopTimeMinutes: 20160
+      Description: Automate static website deployments to S3 using CodePipeline
+      ImageId: amazonlinux-2-x86_64
+      InstanceType: t2.micro
+      Name: Website deployment using CodePipeline (Level 100)

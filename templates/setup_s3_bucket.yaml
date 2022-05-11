@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Setup S3 to host static websites
+
+
+Resources:
+# Bucket to host website 
+  WebsiteS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+
+# Public read access to Bucket  
+  WebsiteS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: PublicRead
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${WebsiteS3Bucket}/*'
+      Bucket: !Ref WebsiteS3Bucket
+      
+# clean up custom resource backed by AWS Lambda 
+  BucketCleanWebsiteS3Bucket:
+    Type: Custom::BucketCleanupLambda
+    Properties:
+      ServiceToken: !GetAtt BucketCleanupLambda.Arn
+      BucketName: !Ref WebsiteS3Bucket
+
+  BucketCleanupLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      MemorySize: 256
+      Timeout: 30
+      Role: !GetAtt BucketCleanupLambdaIAMRole.Arn
+      Handler: index.lambda_handler
+      Code: 
+        ZipFile: |
+          import boto3
+          import sys
+          import urllib3
+          import json
+
+
+          s3_client = boto3.client('s3')
+          http = urllib3.PoolManager()
+
+          def lambda_handler(event, context):
+            print('Incoming Event: {0}'.format(event) )
+            response_data = {}
+            response_data['PhysicalResourceId'] = 'hardcodedphyscialid'
+            response_data['Status'] = 'SUCCESS'
+            response_data['StackId'] = event['StackId']
+            response_data['RequestId'] = event['RequestId']    
+            response_data['LogicalResourceId'] = event['LogicalResourceId']
+            cfn_response_url = event['ResponseURL']
+
+            if event['RequestType'] == 'Delete':
+              try:
+                bucket_name = event['ResourceProperties']['BucketName']
+                # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_objects_v2                
+                objects_list = s3_client.list_objects_v2(
+                    Bucket = bucket_name
+                  )
+                print(objects_list)
+                if 'Contents' in objects_list: 
+                  for object in objects_list['Contents']:
+                    delete_object_response = s3_client.delete_object(
+                      Bucket = bucket_name,
+                      Key = object['Key']
+                    )
+                    print('delete_object_response: {0}'.format(delete_object_response))
+                else:
+                  print('Nothing to delete .. ')
+                  
+                response_data['Status'] = 'SUCCESS'
+                                
+              except:
+                print("Unexpected error: ", sys.exc_info())
+                response_data['Status'] = 'FAILED'
+                response_data['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+            
+            else:
+              print('RequestType: {0}'.format(event['RequestType']))
+
+            http.request('PUT', cfn_response_url, body=json.dumps(response_data).encode('utf-8'), headers={'Content-Type': 'application/json'})
+            return event
+  BucketCleanupLambdaIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: "S3_DeleteFile"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:List*
+                  - s3:DeleteObject
+                Resource: '*'
+
+Outputs:
+  WebsiteS3Bucket:
+    Value: !Ref WebsiteS3Bucket
+    Description: ''
+  
+  WebsiteHttpUrl:
+    Value: !Sub 'http://${WebsiteS3Bucket}.s3-website.${AWS::Region}.amazonaws.com'
+    Description: ''
