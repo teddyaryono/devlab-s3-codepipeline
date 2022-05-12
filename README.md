@@ -98,10 +98,10 @@ aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stack
 1. Website works fine, however everytime every update requires you to manually upload the files to S3. Lets automate this. In the following steps, we will create a code repository and a pipeline to automate deployments to S3. 
 
 
-2. Execute following command to create a code commit repository and pipeline. Remember to replace the **WebsiteS3Bucket** parameter below with the `WebsiteS3Bucket` value you copied earlier from the CloudFormation output.
+2. Execute following command to create a code commit repository and pipeline. Remember to replace the **&lt;WebsiteS3Bucket&gt;** text below with the `WebsiteS3Bucket` value you copied earlier from the CloudFormation output.
 
 ```bash
-aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_deployment_pipeline.yaml --stack-name devlab-s3-bucket-pipeline --parameter-overrides WebsiteS3Bucket=<replace-by-s3-bucket-name-created-above> --capabilities CAPABILITY_IAM
+aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_deployment_pipeline.yaml --stack-name devlab-s3-bucket-pipeline --parameter-overrides WebsiteS3Bucket=<WebsiteS3Bucket> --capabilities CAPABILITY_IAM
 ```
 
 **Note** WebsiteS3Bucket is the same bucket we created earlier. If you do not have the bucket name or website url, execute following command to list them.
