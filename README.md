@@ -71,7 +71,7 @@ Select the **Outputs** tab.
 
 ### Step 3: Upload files to S3 and access them using Website URL
 
-1. Now you have the bucket, let us upload some files and view them in a browser. Use following commands to upload files from template folder to S3 bucket you just created. Replace the **<WebsiteS3Bucket>** with the `WebsiteS3Bucket` value you copied from the CloudFormation output.
+1. Now you have the bucket, let us upload some files and view them in a browser. Use following commands to upload files from template folder to S3 bucket you just created. Replace the **/<WebsiteS3Bucket/>** with the `WebsiteS3Bucket` value you copied from the CloudFormation output.
 
 
 ```bash
@@ -98,7 +98,7 @@ aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stack
 1. Website works fine, however everytime every update requires you to manually upload the files to S3. Lets automate this. In the following steps, we will create a code repository and a pipeline to automate deployments to S3. 
 
 
-2. Execute following command to create a code commit repository and pipeline. Remember to replace the **WebsiteS3Bucket** parameter below with the `WebsiteS3Bucket` value you copied earlier 
+2. Execute following command to create a code commit repository and pipeline. Remember to replace the **WebsiteS3Bucket** parameter below with the `WebsiteS3Bucket` value you copied earlier from the CloudFormation output.
 
 ```bash
 aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_deployment_pipeline.yaml --stack-name devlab-s3-bucket-pipeline --parameter-overrides WebsiteS3Bucket=<replace-by-s3-bucket-name-created-above> --capabilities CAPABILITY_IAM
