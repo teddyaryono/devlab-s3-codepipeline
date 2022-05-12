@@ -29,7 +29,7 @@ rm -rf ~/environment/devlab-s3-bucket-pipeline-website
 cd ~/environment/devlab-s3-codepipeline
 ```
 
-Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation) and check that the stacks `devlab-s3-bucket` and `devlab-s3-bucket-pipeline` does not exist. If either stacks are there and in process of getting deleted, wait for the deletion to complete before proceeding to next steps.
+Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation) and check that the stacks `devlab-s3-bucket` and `devlab-s3-bucket-pipeline` does not exist. If either stacks are there and in process of getting deleted, wait for the deletion to complete before proceeding to the next steps.
 
 ![CFN Empty Stack](images/s3_lab_empty_stack.png)
 
@@ -71,7 +71,7 @@ Select the **Outputs** tab.
 
 ### Step 3: Upload files to S3 and access them using Website URL
 
-1. Now you have the bucket, let us upload some files and view them in a browser. Use following commands to upload files from template folder to S3 bucket you just created. Replace the **&lt;WebsiteS3Bucket&gt;** with the `WebsiteS3Bucket` value you copied from the CloudFormation output.
+1. Now you have the bucket, let us upload some files and view them in a browser. Replace the **&lt;WebsiteS3Bucket&gt;** with the `WebsiteS3Bucket` value you copied from the CloudFormation output in the commands below. Now run following commands to upload files from template folder to S3 bucket you just created. 
 
 
 ```bash
