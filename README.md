@@ -20,37 +20,47 @@ Under `Your environments`, open the **Website deployment using Codepipeline (Lev
 ![Open IDE](images/cloud9_open_ide.png)
 
 
+### Step 1: Refresh your environment
+Please refresh your environment below by running the following commands:
+```bash
+aws cloudformation delete-stack --stack-name 'devlab-s3-bucket'
+aws cloudformation delete-stack --stack-name 'devlab-s3-bucket-pipeline'
+rm -rf ~/environment/devlab-s3-bucket-pipeline-website
+cd ~/environment/devlab-s3-codepipeline
+```
 
-### Step 1: Setup S3 bucket to host your website 
+Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation) and check that the stacks `devlab-s3-bucket` and `devlab-s3-bucket-pipeline` does not exist. If either stacks are there and in process of getting deleted, wait for the deletion to complete. before proceeding to next steps.
+
+![CFN Empty Stack](images/s3_lab_empty_stack.png)
+
+### Step 2: Setup S3 bucket to host your website 
 
 To host a static website, you configure an Amazon S3 bucket for website hosting, and then upload your website content to the bucket. This bucket must have public read access. It is intentional that everyone in the world will have **read** access to this bucket. The website is then available at the AWS Region-specific website endpoint of the bucket.
 
 1. Run the following command in Cloud9 terminal to create S3 bucket and set appropriate permission to host a website.
 
 ```bash
-aws cloudformation deploy --template-file /home/ec2-user/environment/awss3labhome/prereqs/setup_s3_bucket.yaml --stack-name devlab-s3-bucket --capabilities CAPABILITY_IAM
+aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_s3_bucket.yaml --stack-name devlab-s3-bucket --capabilities CAPABILITY_IAM
 ```
 
 ![CFN Stack Deploy](images/s3_lab_deploy_stack.png)
 
 
 
-AWS CloudFormation creates the AWS resources as defined in the template, and groups them in an entity called a stack in AWS CloudFormation. You can access this stack in the [console](https://console.aws.amazon.com/cloudformation). Click on the stack name **devlab-s3-bucket** (or filter by name if you stack is not listed). 
+AWS CloudFormation creates the AWS resources as defined in the template, and groups them in an entity called a stack in AWS CloudFormation. You can access this stack in the [CloudFormation console](https://console.aws.amazon.com/cloudformation). Click on the stack name **devlab-s3-bucket** (or filter by name if you stack is not listed). 
 
 
 ![CFN Stack](images/s3_lab_cloudformation_stack.png)
 
-**Expand** the output section. 
+Select the **Outputs** tab. 
 
 ![CFN Stack Output](images/s3_lab_cloudformation_stack_output.png)
 
 
 
-2. Copy bucket name, switch to [S3 console](https://console.aws.amazon.com/s3) and search your bucket name.
+2. Copy the `WebsiteS3Bucket` value in the outputs section, which is your bucket name/ Then switch to the [S3 console](https://console.aws.amazon.com/s3) and search for your bucket with the S3 console.
 
 ![S3 Search Bucket](images/s3_lab_search_bucket.png)
-
-
 
 
 3. Click on bucket name and review Bucket policy under permissions tab. **Note** Only public read (GET) is allowed.
@@ -59,14 +69,14 @@ AWS CloudFormation creates the AWS resources as defined in the template, and gro
 ![S3 Review Policy](images/s3_lab_bucket_policy.png)
 
 
-### Step 2: Upload files to S3 and access them using Website URL
+### Step 3: Upload files to S3 and access them using Website URL
 
-1. Now you have the bucket, let us upload some files and view them in a browser. Use following command to upload files from pre-reqs folder to S3 bucket you just created. 
+1. Now you have the bucket, let us upload some files and view them in a browser. Use following command to upload files from template folder to S3 bucket you just created. 
 
 ```bash
-aws s3 cp /home/ec2-user/environment/awss3labhome/prereqs/index.html s3://<replace-by-s3-bucket-name-created-above>
+aws s3 cp ~/environment/devlab-s3-codepipeline/templates/index.html s3://<replace-by-s3-bucket-name-created-above>
 
-aws s3 cp /home/ec2-user/environment/awss3labhome/prereqs/error.html s3://<replace-by-s3-bucket-name-created-above>
+aws s3 cp ~/environment/devlab-s3-codepipeline/templates/error.html s3://<replace-by-s3-bucket-name-created-above>
 ```
 
 **Note** If you do not have the bucket name or website url, execute following command to list them.
@@ -77,21 +87,21 @@ aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stack
 
 ![S3 Lab Describe Stack](images/s3_lab_describe_stack.png)
 
-2. Finally access the website URL in a browser and you will see a hello world message (from index.html)
+2. Finally access the website URL in a browser and you will see a hello world message (from index.html). Your website url is the value of the `WebsiteHttpUrl` outputted by the `devlab-s3-bucket` stack.
 
 ![S3 Lab Hello World](images/s3_lab_hello_world.png)
 
 
 
-### Step 3: Add code repository and pipeline to automate deployments
+### Step 4: Add code repository and pipeline to automate deployments
 
 1. Website works fine, however everytime every update requires you to manually upload the files to S3. Lets automate this. In the following steps, we will create a code repository and a pipeline to automate deployments to S3. 
 
 
-2. Execute following command to create a code commit repository and pipeline. 
+2. Execute following command to create a code commit repository and pipeline. Remember to replace the **WebsiteS3Bucket** parameter below with the `WebsiteS3Bucket` value you copied earlier 
 
 ```bash
-aws cloudformation deploy --template-file /home/ec2-user/environment/awss3labhome/prereqs/setup_deployment_pipeline.yaml --stack-name devlab-s3-bucket-pipeline --parameter-overrides WebsiteS3Bucket=<replace-by-s3-bucket-name-created-above> --capabilities CAPABILITY_IAM
+aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_deployment_pipeline.yaml --stack-name devlab-s3-bucket-pipeline --parameter-overrides WebsiteS3Bucket=<replace-by-s3-bucket-name-created-above> --capabilities CAPABILITY_IAM
 ```
 
 **Note** WebsiteS3Bucket is the same bucket we created earlier. If you do not have the bucket name or website url, execute following command to list them.
@@ -100,7 +110,7 @@ aws cloudformation deploy --template-file /home/ec2-user/environment/awss3labhom
 aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stacks[*].Outputs[*]
 ```
 
-You can review the stack in the cloudformation [console](https://console.aws.amazon.com/cloudformation) or execute following command to review the outputs
+You can review the stack in the [CloudFormation console](https://console.aws.amazon.com/cloudformation) or execute following command to review the outputs
 
 ```bash
 aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket-pipeline' --query Stacks[*].Outputs[*]
@@ -124,35 +134,36 @@ git config --global credential.UseHttpPath true
 aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket-pipeline' --query Stacks[*].Outputs[*]
 ```
 
-
+Copy the `CodeCloneHttpUrl` output value and replace the text `<CodeCloneHttpUrl>` with the output value below and then run the following commands:
 ```bash
+cd ~/environment
 git clone <CodeCloneHttpUrl>
 ```
 
 ![S3 Lab Clone Repo](images/s3_lab_cloned_repo.png)
 
 
-5. Use following command to move files from prereqs to our repo
+5. Use following commands below to move the html files from templates folder to our repository
 
 ```bash
-cp -R /home/ec2-user/environment/awss3labhome/prereqs/*.html /home/ec2-user/environment/devlab-s3-bucket-pipeline-website/
+cp -R ~/environment/devlab-s3-codepipeline/templates/*.html ~/environment/devlab-s3-bucket-pipeline-website/
 ```
 
-6. Expand the folder to verify the files are there, and update index.html using cloud9. Use following command to commit your changes to the repository. 
+6. Expand the folder to verify the files are there, and make changes to `index.html` using Cloud9. You can change the text in the file from `Hello World` to `Hello from Sydney Summit`. The use following commands to commit your changes to the repository. 
    
 
 ```bash
-cd /home/ec2-user/environment/devlab-s3-bucket-pipeline-website/ 
+cd ~/environment/devlab-s3-bucket-pipeline-website/ 
 git add .
 git commit -m 'first commit: updates to index.html'
 git push
 ```
 
-7. Access [CodePipeline](https://console.aws.amazon.com/codepipeline) through console. You will notice that pipeline has pushed your changes to s3 bucket.
+7. Access [CodePipeline](https://console.aws.amazon.com/codepipeline) through  theconsole. You will notice that pipeline has pushed your changes to s3 bucket.
 
 ![S3 Lab Pipeline](images/s3_lab_pipeline.png)
 
-8. Visit the website url again (or refresh the page if you have it opened). You should see the updated message.
+8. Visit the website url again (or refresh the page if you have it opened). You should see the updated message. Your website url is the value of the `WebsiteHttpUrl` outputted by the `devlab-s3-bucket` stack.
 
 ![S3 Lab Updated website](images/s3_lab_updated_website.png)
 
@@ -160,24 +171,24 @@ git push
 **Congratulations** You have successfully automated deployments to your S3 bucket. 
 
 
-### Step 4: Review and Cleanup 
+### Step 5: Review and Cleanup 
 
-1. You have created and configured S3 bucket to host static websites, and configured a pipeline to auto deploy changes to S3. 
+1. Congragulations you have created and configured S3 bucket to host static websites, and configured a pipeline to auto deploy changes to S3. 
 
-2. Delete S3 Stack 
-
+2. Now copy and run the following commands to reset your environment:
 ```bash
 aws cloudformation delete-stack --stack-name 'devlab-s3-bucket'
-```
-
-3. Delete CodePipeline Stack 
-
-```bash
 aws cloudformation delete-stack --stack-name 'devlab-s3-bucket-pipeline'
+rm -rf ~/environment/devlab-s3-bucket-pipeline-website
+cd ~/environment/devlab-s3-codepipeline
 ```
 
-4. Close all terminal and delete your project
+3. Close your Cloud9 terminal.
 
-![cleanup](images/s3_lab_cleanup.png)
+### Survey
+
+Thank you for participating in this lab. Please leave us feedback to let us know how we did and for us to improve in future labs. If the QR code below doesn't work, you can click on the link [here](https://eventbox.dev/survey/0GYX1KB).
+
+![Survey QR Code](images/survey_qr.png)
 
 
