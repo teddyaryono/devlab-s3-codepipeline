@@ -71,7 +71,7 @@ Select the **Outputs** tab.
 
 ### Step 3: Upload files to S3 and access them using Website URL
 
-1. Now you have the bucket, let us upload some files and view them in a browser. Use following commands to upload files from template folder to S3 bucket you just created. Replace the **/<WebsiteS3Bucket/>** with the `WebsiteS3Bucket` value you copied from the CloudFormation output.
+1. Now you have the bucket, let us upload some files and view them in a browser. Use following commands to upload files from template folder to S3 bucket you just created. Replace the **&lt;WebsiteS3Bucket&gt;** with the `WebsiteS3Bucket` value you copied from the CloudFormation output.
 
 
 ```bash
