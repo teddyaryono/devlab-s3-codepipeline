@@ -29,7 +29,7 @@ rm -rf ~/environment/devlab-s3-bucket-pipeline-website
 cd ~/environment/devlab-s3-codepipeline
 ```
 
-Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation) and check that the stacks `devlab-s3-bucket` and `devlab-s3-bucket-pipeline` does not exist. If either stacks are there and in process of getting deleted, wait for the deletion to complete. before proceeding to next steps.
+Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation) and check that the stacks `devlab-s3-bucket` and `devlab-s3-bucket-pipeline` does not exist. If either stacks are there and in process of getting deleted, wait for the deletion to complete before proceeding to next steps.
 
 ![CFN Empty Stack](images/s3_lab_empty_stack.png)
 
@@ -37,7 +37,7 @@ Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation) an
 
 To host a static website, you configure an Amazon S3 bucket for website hosting, and then upload your website content to the bucket. This bucket must have public read access. It is intentional that everyone in the world will have **read** access to this bucket. The website is then available at the AWS Region-specific website endpoint of the bucket.
 
-1. Run the following command in Cloud9 terminal to create S3 bucket and set appropriate permission to host a website.
+1. Copy, paste and run the following command in Cloud9 terminal to create S3 bucket and set appropriate permission to host a website.
 
 ```bash
 aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_s3_bucket.yaml --stack-name devlab-s3-bucket --capabilities CAPABILITY_IAM
@@ -58,7 +58,7 @@ Select the **Outputs** tab.
 
 
 
-2. Copy the `WebsiteS3Bucket` value in the outputs section, which is your bucket name/ Then switch to the [S3 console](https://console.aws.amazon.com/s3) and search for your bucket with the S3 console.
+2. Copy the `WebsiteS3Bucket` value in the outputs section, which is your bucket name. Then switch to the [S3 console](https://console.aws.amazon.com/s3) and search for your bucket with the S3 console.
 
 ![S3 Search Bucket](images/s3_lab_search_bucket.png)
 
@@ -71,15 +71,15 @@ Select the **Outputs** tab.
 
 ### Step 3: Upload files to S3 and access them using Website URL
 
-1. Now you have the bucket, let us upload some files and view them in a browser. Use following command to upload files from template folder to S3 bucket you just created. 
+1. Now you have the bucket, let us upload some files and view them in a browser. Use following commands to upload files from template folder to S3 bucket you just created. Replace the **<WebsiteS3Bucket>** with the `WebsiteS3Bucket` value you copied from the CloudFormation output.
+
 
 ```bash
-aws s3 cp ~/environment/devlab-s3-codepipeline/templates/index.html s3://<replace-by-s3-bucket-name-created-above>
+aws s3 cp ~/environment/devlab-s3-codepipeline/templates/index.html s3://<WebsiteS3Bucket>
 
-aws s3 cp ~/environment/devlab-s3-codepipeline/templates/error.html s3://<replace-by-s3-bucket-name-created-above>
+aws s3 cp ~/environment/devlab-s3-codepipeline/templates/error.html s3://<WebsiteS3Bucket>
 ```
-
-**Note** If you do not have the bucket name or website url, execute following command to list them.
+**Note** If you do not have the bucket name or website url, execute following command to list them. 
 
 ```bash
 aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stacks[*].Outputs[*]
@@ -163,7 +163,7 @@ git push
 
 ![S3 Lab Pipeline](images/s3_lab_pipeline.png)
 
-8. Visit the website url again (or refresh the page if you have it opened). You should see the updated message. Your website url is the value of the `WebsiteHttpUrl` outputted by the `devlab-s3-bucket` stack.
+8. Visit the website url again (or refresh the page if you have it opened). You should see the updated message. Your website url is the value of the `WebsiteHttpUrl` outputted by the `devlab-s3-bucket` CloudFormation stack.
 
 ![S3 Lab Updated website](images/s3_lab_updated_website.png)
 
