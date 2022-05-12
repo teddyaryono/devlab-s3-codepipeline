@@ -47,7 +47,7 @@ aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/t
 
 
 
-AWS CloudFormation creates the AWS resources as defined in the template, and groups them in an entity called a stack in AWS CloudFormation. You can access this stack in the [CloudFormation console](https://console.aws.amazon.com/cloudformation). Click on the stack name **devlab-s3-bucket** (or filter by name if you stack is not listed). 
+AWS CloudFormation creates the AWS resources as defined in the template, and groups them in an entity called a stack in AWS CloudFormation. You can access this stack in the [CloudFormation console](https://console.aws.amazon.com/cloudformation). Click on the stack name **devlab-s3-bucket** (or filter by name if your stack is not listed). 
 
 
 ![CFN Stack](images/s3_lab_cloudformation_stack.png)
@@ -104,7 +104,7 @@ aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stack
 aws cloudformation deploy --template-file ~/environment/devlab-s3-codepipeline/templates/setup_deployment_pipeline.yaml --stack-name devlab-s3-bucket-pipeline --parameter-overrides WebsiteS3Bucket=<WebsiteS3Bucket> --capabilities CAPABILITY_IAM
 ```
 
-**Note** WebsiteS3Bucket is the same bucket we created earlier. If you do not have the bucket name or website url, execute following command to list them.
+**Note** `WebsiteS3Bucket` is the same bucket we created earlier. If you do not have the bucket name or website url, execute following command to list them.
 
 ```bash
 aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket' --query Stacks[*].Outputs[*]
@@ -134,7 +134,7 @@ git config --global credential.UseHttpPath true
 aws cloudformation describe-stacks --stack-name 'devlab-s3-bucket-pipeline' --query Stacks[*].Outputs[*]
 ```
 
-Copy the `CodeCloneHttpUrl` output value and replace the text `<CodeCloneHttpUrl>` with the output value below and then run the following commands:
+ Replace the text `<CodeCloneHttpUrl>`  in the commands below with the output value of `CodeCloneHttpUrl` from the CloudFormation stack and then run the following commands:
 ```bash
 cd ~/environment
 git clone <CodeCloneHttpUrl>
@@ -149,7 +149,7 @@ git clone <CodeCloneHttpUrl>
 cp -R ~/environment/devlab-s3-codepipeline/templates/*.html ~/environment/devlab-s3-bucket-pipeline-website/
 ```
 
-6. Expand the folder to verify the files are there, and make changes to `index.html` using Cloud9. You can change the text in the file from `Hello World` to `Hello from Sydney Summit`. The use following commands to commit your changes to the repository. 
+6. Expand the `devlab-s3-bucket-pipeline-website` folder to verify the files are there, and make changes to `index.html` using Cloud9. You can change the text in the file from `Hello World` to `Hello from Sydney Summit`. The use following commands to commit your changes to the repository. 
    
 
 ```bash
