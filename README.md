@@ -1,5 +1,5 @@
 
-# Automate static website deployments to S3 using CodePipelie
+# Automate static website deployments to S3 using CodePipeline
 
 This lab walks you through the steps to host and deploy [static websites to S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html) using CodePipeline. A static website comprises of individual webpages including static content. They might also contain client-side scripts. [AWS CodePipeline](https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html) is a continuous delivery service you can use to model, visualize, and automate the steps required to release your software. 
 
