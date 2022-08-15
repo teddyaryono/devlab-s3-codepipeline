@@ -151,7 +151,7 @@ git clone <CodeCloneHttpUrl>
 cp -R ~/environment/devlab-s3-codepipeline/templates/*.html ~/environment/devlab-s3-bucket-pipeline-website/
 ```
 
-6. Expand the `devlab-s3-bucket-pipeline-website` folder to verify the files are there, and make changes to `index.html` using Cloud9. You can change the text in the file from `Hello World` to `Hello from Sydney Summit`. The use following commands to commit your changes to the repository. 
+6. Expand the `devlab-s3-bucket-pipeline-website` folder to verify the files are there, and make changes to `index.html` using Cloud9. You can change the text in the file from `Hello World` to `Hello from DOTC Sydney`. The use following commands to commit your changes to the repository. 
    
 
 ```bash
