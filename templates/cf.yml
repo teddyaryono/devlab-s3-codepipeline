@@ -12,5 +12,5 @@ Resources:
       InstanceType: t2.micro
       Name: Website deployment using CodePipeline (Level 100)
       Repositories:
-          - RepositoryUrl: !Sub 'https://github.com/calvngo/devlab-s3-codepipeline'
+          - RepositoryUrl: !Sub 'https://github.com/teddyaryono/devlab-s3-codepipeline'
             PathComponent: !Sub 'devlab-s3-codepipeline'
