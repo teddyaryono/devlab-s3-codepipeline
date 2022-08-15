@@ -185,7 +185,7 @@ rm -rf ~/environment/devlab-s3-bucket-pipeline-website
 cd ~/environment/devlab-s3-codepipeline
 ```
 
-3. Close your Cloud9 terminal.
+3. Terminate your Cloud9 instance.
 
 ### Survey
 
