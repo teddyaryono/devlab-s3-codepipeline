@@ -187,4 +187,4 @@ cd ~/environment/devlab-s3-codepipeline
 
 ### Survey
 
-Thank you for participating in this lab. Please [leave us feedback](https://eventbox.dev/survey/0GYX1KB) to let us know how we did and for us to improve in future labs.
+Thank you for participating in this lab. Please [leave us feedback](https://github.com/teddyaryono/dotc-devlab-anz-2022/blob/main/README.md) to let us know how we did and for us to improve in future labs.
