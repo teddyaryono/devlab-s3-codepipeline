@@ -11,7 +11,7 @@ You will first setup a bucket to host static website. Then you will create a dep
 
 NOTE: If you are at an AWS event, there might be some initial resources already provisioned for you. Otherwise, use the CloudFormation template in this repository (in the `templates` directory) and create the required resources before you start.
 
-Before we begin, we will need to login into AWS Cloud9. Cloud9 is a cloud-based integrated development environment (IDE) that lets you write and run code with just a browser. All code required to setup the lab is prepared, participants are only required to run the scripts in Cloud9.
+**_Before we begin, we will need to login into AWS Cloud9. Cloud9 is a cloud-based integrated development environment (IDE) that lets you write and run code with just a browser. All code required to setup the lab is prepared, participants are only required to run the scripts in Cloud9._**
 
 To access Cloud9 search for `Cloud9` in the AWS Console and click on Cloud9.
 
